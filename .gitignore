@@ -1,0 +1,16 @@
+# Release artifacts
+release/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if ever added)
+node_modules/
+package-lock.json

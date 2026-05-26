@@ -1,0 +1,61 @@
+export const STORAGE_KEY = "tabmarkerState";
+
+export const MAX_PRESETS = 5;
+export const MAX_RECENT_MARKERS = 6;
+export const MAX_TEXT_LENGTH = 12;
+export const MAX_OVERLAY_ITEMS = 15;
+
+export const DEFAULT_SETTINGS = {
+  showPageBadge: true,
+  language: "zh-CN",
+  badgePosition: null
+};
+
+export const PRESET_COLORS = [
+  "#EF4444",
+  "#F97316",
+  "#F59E0B",
+  "#EAB308",
+  "#84CC16",
+  "#22C55E",
+  "#10B981",
+  "#14B8A6",
+  "#06B6D4",
+  "#3B82F6",
+  "#6366F1",
+  "#A855F7"
+];
+
+export const COMMON_EMOJIS = [
+  "📌",
+  "🔥",
+  "⭐",
+  "✅",
+  "📘",
+  "📚",
+  "💼",
+  "🧪",
+  "🛠",
+  "📝",
+  "🔍",
+  "🚨"
+];
+
+export const MESSAGE_TYPES = {
+  GET_POPUP_DATA: "GET_POPUP_DATA",
+  APPLY_MARKER: "APPLY_MARKER",
+  CLEAR_MARKER: "CLEAR_MARKER",
+  SAVE_PRESET: "SAVE_PRESET",
+  UPDATE_PRESET: "UPDATE_PRESET",
+  DELETE_PRESET: "DELETE_PRESET",
+  TOGGLE_SETTING: "TOGGLE_SETTING",
+  OPEN_SHORTCUTS_PAGE: "OPEN_SHORTCUTS_PAGE",
+  SAVE_BADGE_POSITION: "SAVE_BADGE_POSITION",
+  ACTIVATE_MARKED_TAB: "ACTIVATE_MARKED_TAB",
+  PING_MARKED_TAB: "PING_MARKED_TAB",
+  CONTENT_READY: "CONTENT_READY",
+  APPLY_CONTENT_MARKER: "APPLY_CONTENT_MARKER",
+  CLEAR_CONTENT_MARKER: "CLEAR_CONTENT_MARKER",
+  UPDATE_CONTENT_OVERLAY: "UPDATE_CONTENT_OVERLAY",
+  FLASH_TAB_ATTENTION: "FLASH_TAB_ATTENTION"
+};

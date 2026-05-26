@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MakeYourTab</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel header-panel">
+        <div class="brand-row">
+          <div class="brand-copy">
+            <p class="eyebrow">MakeYourTab</p>
+            <h1 id="pageTitle" class="title">当前标签标记</h1>
+          </div>
+          <div class="header-actions">
+            <button id="languageToggleButton" class="ghost-button" type="button">EN</button>
+            <button id="openOptionsButton" class="ghost-button" type="button">设置</button>
+          </div>
+        </div>
+        <div id="currentTabMeta" class="tab-meta"></div>
+        <p id="noticeText" class="notice hidden"></p>
+      </section>
+
+      <section class="panel preview-panel">
+        <p id="previewLabel" class="section-label">实时预览</p>
+        <div id="previewChip" class="preview-chip">
+          <span id="previewText">未设置标记</span>
+        </div>
+        <p id="feedbackText" class="feedback"></p>
+      </section>
+
+      <section class="panel editor-panel">
+        <div class="section-row">
+          <p id="colorLabel" class="section-label">颜色</p>
+          <input id="customColorInput" class="color-input" type="color" value="#3B82F6" />
+        </div>
+        <div id="colorGrid" class="color-grid"></div>
+
+        <p id="emojiLabel" class="section-label">Emoji</p>
+        <div id="emojiGrid" class="emoji-grid"></div>
+
+        <div class="section-row">
+          <label id="textLabel" class="section-label" for="tagTextInput">文字标签</label>
+          <span id="charCountText" class="meta-text">0 / 12</span>
+        </div>
+        <input id="tagTextInput" class="text-input" type="text" maxlength="12" placeholder="例如 DOC / TODO" />
+
+        <div class="actions">
+          <button id="clearButton" class="ghost-button" type="button">清除</button>
+          <button id="applyButton" class="primary-button" type="button">应用标记</button>
+        </div>
+      </section>
+
+      <section class="panel recent-panel">
+        <div class="section-row">
+          <p id="recentLabel" class="section-label">最近使用</p>
+        </div>
+        <div id="recentList" class="preset-list"></div>
+      </section>
+
+      <section class="panel preset-panel">
+        <div class="section-row">
+          <p id="presetLabel" class="section-label">预设组合</p>
+          <span id="presetLimitText" class="meta-text">最多 5 个</span>
+        </div>
+        <div class="preset-create-row">
+          <input id="presetNameInput" class="text-input" type="text" maxlength="20" placeholder="预设名称" />
+          <button id="savePresetButton" class="secondary-button" type="button">保存当前</button>
+        </div>
+        <div id="presetList" class="preset-list"></div>
+      </section>
+
+      <section class="panel marked-panel">
+        <div class="section-row">
+          <p id="markedLabel" class="section-label">已标记标签</p>
+          <span id="markedCountText" class="meta-text"></span>
+        </div>
+        <div id="markedTabsList" class="marked-list"></div>
+      </section>
+
+      <section class="panel shortcuts-panel">
+        <div class="section-row">
+          <p id="shortcutsLabel" class="section-label">快捷键</p>
+          <button id="customizeShortcutsButton" class="link-button" type="button">自定义</button>
+        </div>
+        <div id="shortcutsList" class="shortcuts-list">
+          <div class="shortcut-item">
+            <span id="shortcutOpenPopupLabel" class="shortcut-name">打开工具</span>
+            <kbd class="shortcut-key">Alt+T</kbd>
+          </div>
+          <div class="shortcut-item">
+            <span id="shortcutClearMarkerLabel" class="shortcut-name">清除标记</span>
+            <kbd class="shortcut-key">Alt+Shift+C</kbd>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>

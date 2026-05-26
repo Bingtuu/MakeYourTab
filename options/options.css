@@ -1,0 +1,146 @@
+:root {
+  color-scheme: dark;
+  --bg: #020817;
+  --panel: rgba(15, 23, 42, 0.88);
+  --border: rgba(148, 163, 184, 0.14);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 24%),
+    linear-gradient(180deg, #020817 0%, #0f172a 100%);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+.page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.hero {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #60a5fa;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.panel h2,
+.shortcut-list,
+.feedback {
+  margin: 0;
+}
+
+.subtitle,
+.panel p,
+.shortcut-list {
+  color: var(--muted);
+}
+
+.panel {
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel);
+}
+
+.panel-head,
+.toggle-row,
+.preset-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.panel-copy p {
+  line-height: 1.45;
+}
+
+.shortcut-list {
+  margin-top: 14px;
+  padding-left: 18px;
+  line-height: 1.8;
+}
+
+.primary-button,
+.danger-button,
+.language-select {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.primary-button,
+.danger-button {
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-select {
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--text);
+  max-width: 200px;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #eff6ff;
+}
+
+.danger-button {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+.preset-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.preset-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.preset-name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.preset-meta {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.feedback {
+  min-height: 18px;
+  color: #7dd3fc;
+}
