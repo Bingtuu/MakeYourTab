@@ -1,4 +1,4 @@
-﻿# MakeYourTab
+# MakeYourTab
 
 > 一个用于 Chrome 的本地优先 Tab 标记与管理插件。
 > A local-first Chrome extension for visually marking, finding, and managing browser tabs.
@@ -6,6 +6,8 @@
 MakeYourTab 帮助你给正在打开的网页添加颜色、符号和文字标签，让重要页面在大量浏览器 Tab 中更容易被识别、复用和切换。它不尝试修改 Chrome 原生 Tab 背景色，而是使用更稳定、可发布的方式：标题前缀、动态 favicon、Popup 编辑器和页面内浮动抽屉。
 
 [English README](#english)
+
+Chrome Web Store: [MakeYourTab](https://chromewebstore.google.com/detail/makeyourtab/bieibdgkgcahflihdgkhdlhoggnhccdp?authuser=0&hl=zh-CN)
 
 ## 中文说明
 
@@ -116,7 +118,7 @@ MakeYourTab 请求的权限只用于核心功能：
 
 从 Chrome Web Store 安装：
 
-1. 打开 MakeYourTab 的 Chrome Web Store 页面。
+1. 打开 [MakeYourTab Chrome Web Store 页面](https://chromewebstore.google.com/detail/makeyourtab/bieibdgkgcahflihdgkhdlhoggnhccdp?authuser=0&hl=zh-CN)。
 2. 点击 `Add to Chrome`。
 3. 按 Chrome 提示完成安装。
 
@@ -179,7 +181,7 @@ MakeYourTab 是本地优先插件：
 
 ### 当前版本
 
-- Extension version: `1.0.0`
+- Extension version: `1.0.1`
 - Maintenance line: `1.0.1`
 - Manifest: Chrome Manifest V3
 
@@ -365,7 +367,7 @@ See `PRIVACY_POLICY.md` for the full privacy policy.
 
 ### Version
 
-- Extension version: `1.0.0`
+- Extension version: `1.0.1`
 - Maintenance line: `1.0.1`
 - Manifest: Chrome Manifest V3
 
