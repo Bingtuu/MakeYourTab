@@ -61,8 +61,9 @@ Use this checklist for preparing and submitting new versions of MakeYourTab to t
 - [ ] Apply marker updates tab title and favicon
 - [ ] Clear marker restores original title and favicon
 - [ ] Recent tags appear and work
-- [ ] Presets save and apply
-- [ ] Marked tabs list shows and allows switching
+- [ ] Recent tags describe no-color / symbol-only / text-only combinations correctly
+- [ ] Presets save, edit, delete, reorder, and apply
+- [ ] Popup does not show a duplicate marked-tabs list
 - [ ] Language toggle works
 - [ ] Settings button opens options page
 
@@ -70,7 +71,9 @@ Use this checklist for preparing and submitting new versions of MakeYourTab to t
 - [ ] Panel appears on marked pages
 - [ ] Panel shows up to 15 marked tabs
 - [ ] Clicking panel items activates target tab
-- [ ] Double-clicking panel items pings target tab
+- [ ] Panel hint text follows Chinese/English language setting
+- [ ] Double-clicking panel items pings the target tab without switching
+- [ ] Ping flashes both target tab title and favicon
 - [ ] Panel is draggable and position is saved
 
 ### Options Page
@@ -81,6 +84,7 @@ Use this checklist for preparing and submitting new versions of MakeYourTab to t
 
 ### Edge Cases
 - [ ] Page refresh restores marker
+- [ ] Re-injected content script restores old marked pages after extension reload
 - [ ] Service worker restart still works
 - [ ] Unsupported pages fail gracefully
 - [ ] Local file pages behave correctly when file access is enabled

@@ -131,7 +131,7 @@ function renderPresets() {
 }
 
 async function loadData() {
-  const response = await request(MESSAGE_TYPES.GET_POPUP_DATA);
+  const response = await request(MESSAGE_TYPES.GET_STATE);
   if (!response?.ok) {
     showFeedback(response?.error || tr("feedback.loadFailed"), true);
     return;

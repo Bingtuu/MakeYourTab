@@ -8,9 +8,9 @@ MakeYourTab is a Chrome extension for visually marking and managing open browser
 - **Quick Recognition**: Updated tab titles and generated marker icons for faster identification
 - **Recent Tags**: Reuse recent tag combinations with one click
 - **Saved Presets**: Store frequently used tag combinations for easy application
-- **Floating Panel**: Manage marked tabs from a draggable in-page panel
+- **Floating Panel**: Manage marked tabs from a draggable in-page panel that follows the selected language
 - **Tab Switching**: Click panel items to jump to marked tabs
-- **Tab Pinging**: Double-click panel items to send attention cues
+- **Tab Pinging**: Double-click panel items to ping a tab without switching, using title and favicon flashing
 - **Language Support**: Switch between Chinese and English UI
 
 ## Installation
@@ -33,7 +33,7 @@ MakeYourTab is a Chrome extension for visually marking and managing open browser
 2. **Mark a tab**: Choose a color, emoji, and text label, then click "Apply Marker"
 3. **Reuse tags**: Use the "Recent Tags" section for quick reuse
 4. **Apply presets**: Save and apply frequently used tag combinations
-5. **Manage marked tabs**: Use the floating in-page panel or the "Marked Tabs" section in the popup
+5. **Manage marked tabs**: Use the floating in-page panel; the popup focuses on editing, recent tags, and presets
 6. **Clear a marker**: Click "Clear" in the popup
 
 ## Keyboard Shortcuts
@@ -50,6 +50,7 @@ To customize shortcuts, visit `chrome://extensions/shortcuts`
 - **Chrome Manifest V3**: Built for modern Chrome extensions
 - **Permissions**: Uses `tabs`, `activeTab`, `scripting`, `storage`, and host permissions
 - **Limitations**: Cannot directly change native Chrome tab background color
+- **Marker descriptions**: Recent tags and presets distinguish color-only, symbol-only, text-only, and no-color marker combinations
 
 ## Development
 

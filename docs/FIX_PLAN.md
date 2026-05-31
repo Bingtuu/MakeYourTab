@@ -2,7 +2,8 @@
 
 > 本文档汇总了 v1.0.0 Code Review 中发现的问题，并为每个问题提供修复方案。  
 > 修复实施前，请先阅读 `STATE.md` 和 `CLAUDE.md`。  
-> 最后更新: 2026-05-26
+> 最后更新: 2026-05-31
+> 状态说明: 本文档为 1.0.1 修复规划的历史记录；当前实现状态以 `STATE.md` 和 `docs/MakeYourTab_Tech_Handoff_v1.md` 为准。
 
 ---
 
@@ -12,7 +13,7 @@
 |------|------|--------|----------|-----------|
 | FIX-01 | Popup shortcuts 列表未国际化 | 🔴 高 | `popup.html`, `popup.js`, `shared/i18n.js` | 小 |
 | FIX-02 | Options 删除按钮未走 i18n | 🔴 高 | `options/options.js` | 极小 |
-| FIX-03 | `markedTabs` 未按 `updatedAt` 排序 | 🔴 高 | `background/main.js` | 极小 |
+| FIX-03 | Popup 中 `markedTabs` 与页面抽屉重复 | 🔴 高 | `popup/*`, `background/main.js` | 小 |
 | FIX-04 | Color picker 大小写不匹配导致 active 失效 | 🔴 高 | `popup/popup.js` | 小 |
 | FIX-05 | Storage 竞态风险 | 🔴 高 | `background/storage.js` | 中 |
 | FIX-06 | Content script message listener 返回值不统一 | 🔴 高 | `content/marker.js` | 极小 |
@@ -76,21 +77,24 @@ remove.textContent = tr("popup.delete");
 
 ---
 
-## FIX-03: `markedTabs` 未按 `updatedAt` 排序
+## FIX-03: Popup 中 `markedTabs` 与页面抽屉重复
 
 ### 问题描述
-`buildPopupData()` 中的 `markedTabs` 没有排序，而 `buildWindowOverlayItems()` 中按 `updatedAt` 倒序排列。导致 popup 和 overlay 中的标签顺序不一致。
+早期方案同时在 popup 和页面抽屉中展示当前窗口已标记标签。后续用户反馈认为页面抽屉已经承担跳转和 ping 的管理职责，popup 再显示 `markedTabs` 会造成信息重复和界面拥挤。
 
 ### 修复方案
-在 `buildPopupData()` 的 `markedTabs` 构建后添加 `.sort((a, b) => b.updatedAt - a.updatedAt)`。
+移除 popup 内“已标记标签”区域，保留页面抽屉作为唯一 marked tab 管理入口。`buildPopupData()` 不再返回 `markedTabs`。
 
 ### 代码修改点
 ```javascript
-// background/main.js:167-180
-markedTabs = tabs
-  .filter((tab) => state.tabMarkers[String(tab.id)])
-  .map((tab) => { ... })
-  .sort((a, b) => b.updatedAt - a.updatedAt);  // 新增
+// popup/popup.html
+// 删除 marked-panel section
+
+// popup/popup.js
+// 删除 renderMarkedTabs() 和 markedTabs state
+
+// background/main.js
+// buildPopupData() 不再构建 markedTabs
 ```
 
 ---

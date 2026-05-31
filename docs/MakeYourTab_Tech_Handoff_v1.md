@@ -2,7 +2,7 @@
 
 ## 1. Document Purpose
 
-This document is the primary technical handoff for `MakeYourTab 1.0.0`.
+This document is the primary technical handoff for `MakeYourTab 1.0.0` and the `1.0.1` maintenance line.
 
 It is written for the next development phase, especially for:
 
@@ -24,7 +24,7 @@ It helps users:
 - mark the current tab with color, emoji, and text
 - reuse recent tags quickly
 - save and apply presets
-- manage marked tabs from the popup
+- edit markers, reuse recent tags, and manage presets from the popup
 - manage marked tabs from a floating in-page panel
 - switch language between Chinese and English
 
@@ -216,7 +216,8 @@ Responsibilities:
 - preview marker
 - save presets
 - reuse recent tags
-- view marked tabs
+- edit/delete/reorder presets
+- keep marker descriptions accurate for color-only, symbol-only, text-only, and no-color combinations
 - language toggle
 
 #### `options/`
@@ -256,11 +257,13 @@ Main orchestration file.
 
 Important responsibilities:
 
-- `GET_POPUP_DATA`
+- `GET_STATE`
 - `APPLY_MARKER`
 - `CLEAR_MARKER`
 - `SAVE_PRESET`
+- `UPDATE_PRESET`
 - `DELETE_PRESET`
+- `REORDER_PRESETS`
 - `TOGGLE_SETTING`
 - `SAVE_BADGE_POSITION`
 - `ACTIVATE_MARKED_TAB`
@@ -312,7 +315,7 @@ Marker and preset validation logic.
 
 ---
 
-## 8. Current Feature Set In 1.0.0
+## 8. Current Feature Set In 1.0.1 Maintenance
 
 ### Marker Features
 
@@ -325,7 +328,9 @@ Marker and preset validation logic.
 ### Storage Features
 
 - save presets
+- update presets
 - delete presets
+- reorder presets
 - save recent tags
 - save language
 - save page badge visibility
@@ -341,16 +346,17 @@ Marker and preset validation logic.
 
 ### Tab Interaction Features
 
-- popup-based tab switching
+- popup-based current tab marking and clearing
 - floating panel click to activate tab
-- floating panel double-click to ping tab
+- floating panel double-click to ping tab without switching
 
 ### UX Features
 
 - Chinese/English switching
+- floating panel text follows the selected language
 - recent tag reuse
 - preset reuse
-- current-window marked tab list
+- precise marker descriptions for no-color / symbol-only / text-only states
 
 ---
 
@@ -453,6 +459,7 @@ background -> Chrome tabs API: activate tab + focus window
 ```text
 content -> background: PING_MARKED_TAB
 background -> content(target tab): FLASH_TAB_ATTENTION
+content(target tab): flash title + favicon, do not activate target tab
 ```
 
 ---
@@ -475,7 +482,7 @@ Needed for:
 
 - tab metadata
 - activating a marked tab
-- building marked tab lists
+- building floating panel marked tab lists
 - detecting lifecycle changes
 
 ### `activeTab`
@@ -513,7 +520,7 @@ Current workaround:
 - title prefix
 - generated favicon
 - floating in-page panel
-- popup lists
+- popup preview / recent / preset lists
 
 ### 12.2 Protected Pages Cannot Be Fully Injected
 
@@ -596,9 +603,11 @@ For `1.0.1`, add lightweight verification at least for:
 - i18n fallback behavior
 - storage shape migration
 
-### 13.5 Some Strings Still Live Outside i18n Intent
+### 13.5 Overlay Localization Is Lightweight
 
-Core UI is localized, but future work should keep all user-facing text in `shared/i18n.js`.
+Popup and options strings live in `shared/i18n.js`. The content overlay uses a small local language map inside `content/marker.js` because content scripts cannot import ES modules directly in the current zero-build setup.
+
+Future work can move these overlay strings into a shared non-module bundle or inject localized strings from background messages.
 
 ---
 
@@ -624,6 +633,7 @@ If the next version is a practical maintenance release, recommended priorities a
 - improve floating panel UX for long lists
 - consider internal scrolling or compact mode
 - consider stronger grouping for marked tabs
+- keep double-click ping non-navigating and attention-only
 
 ### Priority D
 
@@ -650,6 +660,8 @@ Before releasing any new version, manually verify:
 - clear marker works
 - recent tags update
 - presets save/delete work
+- presets edit/reorder work
+- recent tags describe symbol-only / text-only / no-color states correctly
 - language toggle works
 
 ### Content Behavior
@@ -660,7 +672,9 @@ Before releasing any new version, manually verify:
 - panel drag persists
 - up to 15 items display
 - panel click activates target tab
-- panel double-click pings target tab
+- panel language follows the selected setting
+- panel double-click pings target tab without activating it
+- ping flashes both title and favicon
 
 ### Options
 

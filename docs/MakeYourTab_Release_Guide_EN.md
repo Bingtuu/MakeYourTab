@@ -17,6 +17,7 @@ It is designed for people who keep many tabs open at the same time and need a li
 - Saves recent tags for one-click reuse
 - Shows marked tabs in the current browser window
 - Lets users click a panel item to jump to that tab
+- Lets users double-click a panel item to ping the tab without switching
 - Supports Chinese and English UI switching
 
 ---
@@ -43,7 +44,7 @@ The floating panel on the page shows up to 15 marked tabs from the current brows
 
 ### 4. Ping a Tab Without Switching
 
-Double-click a floating panel item to trigger an attention effect on the related tab instead of switching immediately.
+Double-click a floating panel item to trigger an attention effect on the related tab instead of switching. The target tab flashes its title and favicon so users can locate it without leaving the current page.
 
 ---
 
@@ -76,10 +77,6 @@ Double-click a floating panel item to trigger an attention effect on the related
 | [Save Current]                                        |
 | [Apply] Work Docs                         [Delete]    |
 +------------------------------------------------------+
-| Marked Tabs                                           |
-| [Open] 🔥 HOT      Example Site                       |
-| [Open] 📘 DOC      Docs Page                          |
-+------------------------------------------------------+
 ```
 
 ### In-Page Floating Panel
@@ -99,7 +96,8 @@ Behavior:
 
 - Drag the panel to move it
 - Click an item to activate that tab
-- Double-click an item to ping the related tab
+- Double-click an item to ping the related tab without switching
+- The panel hint follows the selected Chinese/English language
 
 ---
 
@@ -123,7 +121,7 @@ Tab Recognition Layer
    A visible in-page panel shows marked tabs and shortcuts
 
 4. Popup Lists
-   Recent tags, presets, and marked tabs are accessible from the popup
+   Recent tags and presets are accessible from the popup
 ```
 
 This makes the experience practical while staying within Chrome extension capabilities.

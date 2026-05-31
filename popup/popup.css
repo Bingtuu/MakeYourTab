@@ -8,7 +8,7 @@
   --accent: #3b82f6;
   --accent-strong: #2563eb;
   --danger: #ef4444;
-  --popup-width: 468px;
+  --popup-width: 500px;
 }
 
 * {
@@ -171,19 +171,22 @@ body {
 
 .color-grid,
 .emoji-grid,
-.preset-list,
-.marked-list {
+.preset-list {
   display: grid;
   gap: 8px;
 }
 
 .color-grid {
-  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  grid-auto-rows: 38px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-top: 10px;
 }
 
 .emoji-grid {
-  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  grid-auto-rows: 38px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-top: 10px;
 }
 
@@ -202,8 +205,7 @@ body {
 .ghost-button:hover,
 .secondary-button:hover,
 .primary-button:hover,
-.preset-card:hover,
-.marked-item:hover {
+.preset-card:hover {
   transform: translateY(-1px);
 }
 
@@ -214,9 +216,15 @@ body {
 }
 
 .emoji-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(30, 41, 59, 0.86);
   color: var(--text);
   font-size: 18px;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial, sans-serif;
+  line-height: 1;
+  padding: 0;
 }
 
 .text-input,
@@ -293,15 +301,13 @@ body {
   transform: none;
 }
 
-.preset-list,
-.marked-list {
+.preset-list {
   margin-top: 10px;
   max-height: 144px;
   overflow: auto;
 }
 
-.preset-card,
-.marked-item {
+.preset-card {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -327,20 +333,18 @@ body {
   transform: translateY(2px);
 }
 
-.preset-main,
-.marked-main {
+.preset-main {
   min-width: 0;
+  flex: 1;
 }
 
-.preset-name,
-.marked-title {
+.preset-name {
   margin: 0;
   font-size: 13px;
   font-weight: 700;
 }
 
-.preset-meta,
-.marked-url {
+.preset-meta {
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 12px;
@@ -354,13 +358,31 @@ body {
 .mini-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 140px;
   padding: 6px 8px;
+  border: 0;
   border-radius: 999px;
+  outline: 0;
+  background-clip: padding-box;
   color: #fff;
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 210px;
 }
 
 .link-button,
@@ -403,6 +425,10 @@ body {
 }
 
 .shortcut-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--text);
 }
@@ -410,6 +436,7 @@ body {
 .shortcut-key {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   padding: 4px 8px;
   border-radius: 6px;
   background: rgba(30, 41, 59, 0.88);
@@ -418,11 +445,6 @@ body {
   font-size: 11px;
   font-family: monospace;
   font-weight: 700;
-}
-
-.marked-item.is-active {
-  border-color: rgba(96, 165, 250, 0.3);
-  background: rgba(30, 41, 59, 0.82);
 }
 
 body[data-lang="en"] .title {
@@ -435,8 +457,29 @@ body[data-lang="en"] .primary-button {
   font-size: 12px;
 }
 
-@media (max-width: 480px) {
-  :root {
-    --popup-width: 448px;
-  }
+body[data-lang="en"] .app {
+  gap: 10px;
+  padding: 12px;
+}
+
+body[data-lang="en"] .panel {
+  padding: 12px;
+}
+
+body[data-lang="en"] .color-swatch,
+body[data-lang="en"] .emoji-button {
+  height: 36px;
+}
+
+body[data-lang="en"] .color-grid,
+body[data-lang="en"] .emoji-grid {
+  grid-auto-rows: 36px;
+}
+
+body[data-lang="en"] .mini-chip {
+  max-width: 112px;
+}
+
+body[data-lang="en"] .preset-actions {
+  max-width: 190px;
 }

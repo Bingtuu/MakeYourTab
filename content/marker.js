@@ -59,8 +59,30 @@
     return title.length > 24 ? `${title.slice(0, 24)}...` : title;
   }
 
+  function currentLanguage() {
+    return pageState.settings?.language === "en" ? "en" : "zh-CN";
+  }
+
+  function overlayText(key) {
+    const lang = currentLanguage();
+    const messages = {
+      "zh-CN": {
+        fallbackLabel: "标签",
+        hint: "单击跳转 · 双击提示",
+        attentionPrefix: "提示"
+      },
+      en: {
+        fallbackLabel: "TAG",
+        hint: "Click to open · Double click to ping",
+        attentionPrefix: "PING"
+      }
+    };
+
+    return messages[lang][key] || messages["zh-CN"][key] || key;
+  }
+
   function buildMarkerLabel(marker = {}) {
-    return [marker.emoji, marker.text].filter(Boolean).join(" ") || "TAG";
+    return [marker.emoji, marker.text].filter(Boolean).join(" ") || overlayText("fallbackLabel");
   }
 
   function getExistingIconLinks() {
@@ -306,6 +328,7 @@
     }
     const badge = ensureOverlayRoot();
     applyOverlayPosition(badge);
+    badge.style.display = "grid";
     badge.innerHTML = "";
 
     const header = document.createElement("div");
@@ -322,7 +345,7 @@
     title.style.fontWeight = "700";
 
     const hint = document.createElement("div");
-    hint.textContent = "Click to open · Double click to ping";
+    hint.textContent = overlayText("hint");
     hint.style.fontSize = "11px";
     hint.style.color = "rgba(226, 232, 240, 0.72)";
 
@@ -445,6 +468,31 @@
     return canvas.toDataURL("image/png");
   }
 
+  function buildAttentionFaviconDataUrl(marker) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return "";
+    }
+
+    ctx.fillStyle = marker.color || "#F97316";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.arc(32, 32, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#FDE68A";
+    ctx.font = "bold 38px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("!", 32, 35);
+
+    return canvas.toDataURL("image/png");
+  }
+
   function applyMarker(payload) {
     const marker = payload?.marker || {};
     const original = payload?.original || {};
@@ -521,7 +569,10 @@
   function flashTabAttention(payload) {
     const marker = payload?.marker || {};
     const baseTitle = pageState.desiredTitle || buildTitle(marker, payload?.title || pageState.originalTitle || document.title);
-    const attentionTitle = `<<< ${buildMarkerLabel(marker)} >>> ${payload?.title || pageState.originalTitle || document.title}`;
+    const attentionTitle = `<<< ${overlayText("attentionPrefix")}: ${buildMarkerLabel(marker)} >>> ${payload?.title || pageState.originalTitle || document.title}`;
+    const injectedFavicon = getInjectedFavicon();
+    const baseFavicon = pageState.desiredFaviconHref || injectedFavicon?.href || "";
+    const attentionFavicon = buildAttentionFaviconDataUrl(marker);
     let tick = 0;
 
     if (pageState.attentionTimer) {
@@ -545,16 +596,26 @@
     }
 
     stopTitleSync();
+    stopFaviconSync();
     pageState.attentionTimer = window.setInterval(() => {
-      document.title = tick % 2 === 0 ? attentionTitle : baseTitle;
+      const isAttentionFrame = tick % 2 === 0;
+      document.title = isAttentionFrame ? attentionTitle : baseTitle;
+      if (attentionFavicon || baseFavicon) {
+        const favicon = ensureFaviconElement();
+        favicon.href = isAttentionFrame ? attentionFavicon || baseFavicon : baseFavicon || attentionFavicon;
+      }
       tick += 1;
 
       if (tick >= 8) {
         window.clearInterval(pageState.attentionTimer);
         pageState.attentionTimer = null;
         document.title = baseTitle;
+        if (baseFavicon) {
+          ensureFaviconElement().href = baseFavicon;
+        }
         if (pageState.markerActive) {
           startTitleSync();
+          startFaviconSync();
         }
       }
     }, 350);
@@ -565,25 +626,25 @@
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type === "APPLY_CONTENT_MARKER") {
       sendResponse(applyMarker(message.payload));
-      return true;
+      return false;
     }
 
     if (message?.type === "CLEAR_CONTENT_MARKER") {
       sendResponse(clearMarker(message.payload));
-      return true;
+      return false;
     }
 
     if (message?.type === "UPDATE_CONTENT_OVERLAY") {
       sendResponse(updateOverlay(message.payload));
-      return true;
+      return false;
     }
 
     if (message?.type === "FLASH_TAB_ATTENTION") {
       sendResponse(flashTabAttention(message.payload));
-      return true;
+      return false;
     }
 
-    return true;
+    return false;
   });
 
   window.addEventListener("resize", () => {

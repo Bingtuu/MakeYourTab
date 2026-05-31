@@ -83,12 +83,13 @@ User Action → Popup/Options → Background (main.js) → Storage → Broadcast
 
 | 类型 | 方向 | 用途 |
 |------|------|------|
-| `GET_POPUP_DATA` | popup/options → bg | 获取完整状态 |
+| `GET_STATE` | popup/options → bg | 获取完整状态 |
 | `APPLY_MARKER` | popup → bg | 给 tab 打标记 |
 | `CLEAR_MARKER` | popup → bg | 清除 tab 标记 |
 | `SAVE_PRESET` | popup → bg | 保存新预设 |
 | `UPDATE_PRESET` | popup → bg | 更新预设 |
 | `DELETE_PRESET` | popup/options → bg | 删除预设 |
+| `REORDER_PRESETS` | popup → bg | 持久化预设拖拽排序 |
 | `TOGGLE_SETTING` | popup/options → bg | 更新设置项 |
 | `SAVE_BADGE_POSITION` | content → bg | 保存面板位置 |
 | `ACTIVATE_MARKED_TAB` | content → bg | 激活指定 tab |
@@ -165,7 +166,7 @@ User Action → Popup/Options → Background (main.js) → Storage → Broadcast
 任何修改后，至少验证：
 
 1. **Popup**: 打开 → 应用标记 → 标题和 favicon 变化 → 清除 → 恢复
-2. **Overlay**: 标记后页面出现浮动面板 → 拖拽 → 点击切换 tab → 双击 ping
+2. **Overlay**: 标记后页面出现浮动面板 → 拖拽 → 点击切换 tab → 双击 ping 只闪烁标题和 favicon，不切换 tab
 3. **选项**: 语言切换 → badge 显示/隐藏 → 预设删除
 4. **刷新**: 刷新标记页面 → 标记自动恢复
 

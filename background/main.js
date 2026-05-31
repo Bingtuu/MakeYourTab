@@ -7,12 +7,12 @@ import {
   deletePreset,
   getState,
   getTabMarker,
-  pushRecentMarker,
+  reorderPresets,
   removeTabMarker,
   savePreset,
   updatePreset,
   updateSetting,
-  upsertTabMarker
+  upsertTabMarkerWithRecent
 } from "./storage.js";
 import {
   validateMarker,
@@ -160,27 +160,6 @@ async function buildPopupData() {
   const state = await getState();
   const currentMarker = currentTab ? state.tabMarkers[String(currentTab.id)] || null : null;
 
-  let markedTabs = [];
-  if (currentTab?.windowId !== undefined) {
-    const tabs = await chrome.tabs.query({ windowId: currentTab.windowId });
-
-    markedTabs = tabs
-      .filter((tab) => state.tabMarkers[String(tab.id)])
-      .map((tab) => {
-        const markerState = state.tabMarkers[String(tab.id)];
-        return {
-          tabId: tab.id,
-          title: tab.title || markerState.title || "未命名标签",
-          url: tab.url || markerState.url || "",
-          favIconUrl: tab.favIconUrl || "",
-          active: Boolean(tab.active),
-          marker: markerState.marker,
-          updatedAt: markerState.updatedAt || 0
-        };
-      })
-      .sort((a, b) => b.updatedAt - a.updatedAt);
-  }
-
   return {
     currentTab: currentTab
       ? {
@@ -194,8 +173,40 @@ async function buildPopupData() {
     currentMarker,
     presets: state.savedPresets,
     recentMarkers: state.recentMarkers || [],
-    markedTabs,
     settings: state.settings
+  };
+}
+
+function stripExistingMarkerPrefix(title = "", marker = {}) {
+  let cleanTitle = title || "";
+
+  if (marker.emoji && cleanTitle.startsWith(marker.emoji)) {
+    cleanTitle = cleanTitle.slice(marker.emoji.length).trimStart();
+  }
+
+  if (marker.text) {
+    const textPrefix = `[${marker.text}]`;
+    if (cleanTitle.startsWith(textPrefix)) {
+      cleanTitle = cleanTitle.slice(textPrefix.length).trimStart();
+    }
+  }
+
+  return cleanTitle;
+}
+
+function resolveOriginalSnapshot(tab, existingMarkerState) {
+  const existingOriginal = existingMarkerState?.original || {};
+  const existingOriginalTitle = typeof existingOriginal.title === "string" && existingOriginal.title.trim()
+    ? existingOriginal.title
+    : "";
+  const fallbackTitle = stripExistingMarkerPrefix(
+    tab.title || existingMarkerState?.title || "",
+    existingMarkerState?.marker
+  );
+
+  return {
+    title: existingOriginalTitle || fallbackTitle || tab.title || "",
+    faviconUrl: existingOriginal.faviconUrl || tab.favIconUrl || ""
   };
 }
 
@@ -203,6 +214,7 @@ async function applyMarkerToTab(tabId, marker) {
   const tab = await chrome.tabs.get(tabId);
   const existing = await getTabMarker(tabId);
   const state = await getState();
+  const original = resolveOriginalSnapshot(tab, existing);
 
   const markerState = {
     tabId,
@@ -210,15 +222,11 @@ async function applyMarkerToTab(tabId, marker) {
     url: tab.url || "",
     title: tab.title || "",
     marker,
-    original: existing?.original || {
-      title: tab.title || "",
-      faviconUrl: tab.favIconUrl || ""
-    },
+    original,
     updatedAt: Date.now()
   };
 
-  await upsertTabMarker(tabId, markerState);
-  await pushRecentMarker(marker);
+  await upsertTabMarkerWithRecent(tabId, markerState, marker);
 
   const injectable = isInjectableUrl(tab.url || "");
   let applyResult = { ok: false, skipped: true };
@@ -237,12 +245,17 @@ async function applyMarkerToTab(tabId, marker) {
 }
 
 async function clearMarkerFromTab(tabId) {
-  const existing = await getTabMarker(tabId);
-  const windowId = existing?.windowId;
-  const removed = await removeTabMarker(tabId);
+  const [existing, tab] = await Promise.all([
+    getTabMarker(tabId),
+    chrome.tabs.get(tabId).catch(() => null)
+  ]);
+  if (!existing) {
+    return null;
+  }
 
-  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  const windowId = existing.windowId;
   const injectable = tab?.url ? isInjectableUrl(tab.url) : false;
+  const removed = await removeTabMarker(tabId);
 
   if (injectable) {
     await ensureContentScriptInjected(tabId);
@@ -375,7 +388,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const language = await getLanguage();
 
     switch (message?.type) {
-      case MESSAGE_TYPES.GET_POPUP_DATA: {
+      case MESSAGE_TYPES.GET_STATE: {
         sendResponse({
           ok: true,
           data: await buildPopupData()
@@ -477,6 +490,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       case MESSAGE_TYPES.DELETE_PRESET: {
         const presets = await deletePreset(message.presetId);
+        sendResponse({
+          ok: true,
+          data: presets
+        });
+        break;
+      }
+
+      case MESSAGE_TYPES.REORDER_PRESETS: {
+        const presets = await reorderPresets(message.orderedPresetIds || []);
         sendResponse({
           ok: true,
           data: presets

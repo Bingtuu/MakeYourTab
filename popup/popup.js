@@ -31,9 +31,6 @@ const elements = {
   presetNameInput: document.getElementById("presetNameInput"),
   savePresetButton: document.getElementById("savePresetButton"),
   presetList: document.getElementById("presetList"),
-  markedLabel: document.getElementById("markedLabel"),
-  markedTabsList: document.getElementById("markedTabsList"),
-  markedCountText: document.getElementById("markedCountText"),
   openOptionsButton: document.getElementById("openOptionsButton"),
   languageToggleButton: document.getElementById("languageToggleButton"),
   shortcutsLabel: document.getElementById("shortcutsLabel"),
@@ -48,7 +45,6 @@ const state = {
   currentMarker: null,
   presets: [],
   recentMarkers: [],
-  markedTabs: [],
   settings: {
     language: "zh-CN"
   },
@@ -96,8 +92,7 @@ function renderStaticText() {
   elements.shortcutClearMarkerLabel.textContent = tr("popup.shortcut.clearMarker");
   elements.customizeShortcutsButton.textContent = tr("popup.customizeShortcuts");
   elements.presetLimitText.textContent = tr("popup.presetLimit");
-  elements.savePresetButton.textContent = tr("popup.saveCurrent");
-  elements.markedLabel.textContent = tr("popup.markedTabs");
+  elements.savePresetButton.textContent = state.editingPresetId ? tr("popup.updatePreset") : tr("popup.saveCurrent");
   elements.openOptionsButton.textContent = tr("popup.settings");
   elements.tagTextInput.placeholder = tr("popup.textPlaceholder");
   elements.presetNameInput.placeholder = tr("popup.presetName");
@@ -110,6 +105,34 @@ function getFormMarker() {
     emoji: state.selectedEmoji,
     text: elements.tagTextInput.value.trim()
   };
+}
+
+function buildMarkerText(marker = {}) {
+  return [marker.emoji, marker.text].filter(Boolean).join(" ");
+}
+
+function describeMarker(marker = {}) {
+  const hasColor = Boolean(marker.color);
+  const hasEmoji = Boolean(marker.emoji);
+  const hasText = Boolean(marker.text);
+
+  if (hasEmoji && hasText) {
+    return hasColor ? buildMarkerText(marker) : tr("popup.symbolAndText");
+  }
+
+  if (hasEmoji) {
+    return hasColor ? marker.emoji : tr("popup.symbolOnly");
+  }
+
+  if (hasText) {
+    return hasColor ? marker.text : tr("popup.textOnly");
+  }
+
+  if (hasColor) {
+    return tr("popup.onlyColor");
+  }
+
+  return tr("popup.noColor");
 }
 
 function updateCharCount() {
@@ -247,7 +270,7 @@ function renderPresetList() {
 
     const meta = document.createElement("p");
     meta.className = "preset-meta";
-    meta.textContent = [preset.emoji, preset.text].filter(Boolean).join(" ") || tr("popup.onlyColor");
+    meta.textContent = describeMarker(preset);
 
     main.append(name, meta);
 
@@ -258,7 +281,7 @@ function renderPresetList() {
     chip.type = "button";
     chip.className = "mini-chip";
     chip.style.background = preset.color || "#334155";
-    chip.textContent = [preset.emoji, preset.text].filter(Boolean).join(" ") || tr("popup.applyChip");
+    chip.textContent = buildMarkerText(preset) || tr("popup.applyChip");
     chip.addEventListener("click", async () => {
       await applyMarkerToForm(preset, true);
     });
@@ -298,11 +321,11 @@ function renderRecentList() {
 
     const name = document.createElement("p");
     name.className = "preset-name";
-    name.textContent = [recent.emoji, recent.text].filter(Boolean).join(" ") || tr("popup.onlyColor");
+    name.textContent = buildMarkerText(recent) || describeMarker(recent);
 
     const meta = document.createElement("p");
     meta.className = "preset-meta";
-    meta.textContent = recent.color || tr("popup.onlyColor");
+    meta.textContent = recent.color || tr("popup.noColor");
 
     main.append(name, meta);
 
@@ -317,51 +340,6 @@ function renderRecentList() {
 
     item.append(main, chip);
     elements.recentList.appendChild(item);
-  });
-}
-
-function renderMarkedTabs() {
-  elements.markedTabsList.innerHTML = "";
-  elements.markedCountText.textContent = tr("popup.markedCount", {
-    count: state.markedTabs.length
-  });
-
-  if (!state.markedTabs.length) {
-    elements.markedTabsList.innerHTML = `<p class="meta-text">${tr("popup.noMarkedTabs")}</p>`;
-    return;
-  }
-
-  state.markedTabs.forEach((item) => {
-    const row = document.createElement("div");
-    row.className = `marked-item${item.active ? " is-active" : ""}`;
-
-    const main = document.createElement("div");
-    main.className = "marked-main";
-
-    const title = document.createElement("p");
-    title.className = "marked-title";
-    title.textContent = [item.marker.emoji, item.marker.text].filter(Boolean).join(" ") || item.title;
-
-    const url = document.createElement("p");
-    url.className = "marked-url";
-    url.textContent = shortenUrl(item.url);
-
-    main.append(title, url);
-
-    const openButton = document.createElement("button");
-    openButton.type = "button";
-    openButton.className = "link-button";
-    openButton.textContent = tr("popup.jump");
-    openButton.addEventListener("click", async () => {
-      await chrome.runtime.sendMessage({
-        type: MESSAGE_TYPES.ACTIVATE_MARKED_TAB,
-        tabId: item.tabId
-      });
-      window.close();
-    });
-
-    row.append(main, openButton);
-    elements.markedTabsList.appendChild(row);
   });
 }
 
@@ -394,7 +372,7 @@ async function request(type, payload = {}) {
 }
 
 async function loadPopupData() {
-  const response = await request(MESSAGE_TYPES.GET_POPUP_DATA);
+  const response = await request(MESSAGE_TYPES.GET_STATE);
   if (!response?.ok) {
     showFeedback(response?.error || tr("feedback.loadFailed"), true);
     return;
@@ -404,7 +382,6 @@ async function loadPopupData() {
   state.currentMarker = response.data.currentMarker;
   state.presets = response.data.presets || [];
   state.recentMarkers = response.data.recentMarkers || [];
-  state.markedTabs = response.data.markedTabs || [];
   state.settings = response.data.settings || state.settings;
 
   renderStaticText();
@@ -412,7 +389,6 @@ async function loadPopupData() {
   syncForm(state.currentMarker);
   renderRecentList();
   renderPresetList();
-  renderMarkedTabs();
 }
 
 async function applyMarker() {
@@ -520,9 +496,8 @@ async function reorderPresets(draggedId, targetId) {
   const [draggedItem] = newPresets.splice(draggedIndex, 1);
   newPresets.splice(targetIndex, 0, draggedItem);
 
-  const response = await request(MESSAGE_TYPES.TOGGLE_SETTING, {
-    key: "presets",
-    value: newPresets
+  const response = await request(MESSAGE_TYPES.REORDER_PRESETS, {
+    orderedPresetIds: newPresets.map((preset) => preset.id)
   });
 
   if (!response?.ok) {
@@ -530,7 +505,7 @@ async function reorderPresets(draggedId, targetId) {
     return;
   }
 
-  state.presets = newPresets;
+  state.presets = response.data || newPresets;
   renderPresetList();
 }
 
@@ -571,7 +546,6 @@ async function toggleLanguage() {
   updatePreview();
   renderRecentList();
   renderPresetList();
-  renderMarkedTabs();
   showFeedback(tr("feedback.languageUpdated"));
 }
 

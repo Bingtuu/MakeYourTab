@@ -98,6 +98,7 @@ chrome.runtime.onInstalled → init storage
 getState(): Promise<State>
 saveState(state): Promise<State>
 upsertTabMarker(tabId, payload): Promise<MarkerState>
+upsertTabMarkerWithRecent(tabId, payload, marker): Promise<{ markerState, recentMarkers }>
 getTabMarker(tabId): Promise<MarkerState | null>
 removeTabMarker(tabId): Promise<MarkerState | null>
 cleanupClosedTab(tabId): Promise<MarkerState | null>
@@ -105,10 +106,11 @@ savePreset(preset): Promise<Preset[]>      // 超限抛出 error.maxPresets
 updatePreset(presetId, updates): Promise<Preset[]>
 deletePreset(presetId): Promise<Preset[]>
 pushRecentMarker(marker): Promise<Recent[]>
-updateSetting(key, value): Promise<Settings | Preset[]>
+reorderPresets(orderedPresetIds): Promise<Preset[]>
+updateSetting(key, value): Promise<Settings>
 ```
 
-**注意:** `updateSetting("presets", value)` 被重用于预设排序，这是历史设计债务。
+**注意:** 预设排序已从 `updateSetting()` 中分离，当前使用独立的 `REORDER_PRESETS` 消息和 `reorderPresets()` mutation。
 
 ### 3.2 Content Script (`content/marker.js`)
 
@@ -132,12 +134,12 @@ pageState = {
 | 机制 | 实现 |
 |------|------|
 | 标题重写 | `document.title = desiredTitle` + `setInterval` 500ms 同步防覆盖 |
-| Favicon 重写 | 创建/更新 `id="tabmarker-favicon"` 的 `<link rel="icon">` + `setInterval` 800ms 同步 |
+| Favicon 重写 | 创建/更新 `id="tabmarker-favicon"` 的 `<link rel="icon">` + MutationObserver + `setInterval` 2000ms 同步 |
 | 原 Favicon 禁用 | 将页面原有 `<link rel*="icon">` 的 rel 改为 `tabmarker-disabled-icon`，恢复时还原 |
 | 浮动面板 | 创建 `id="tabmarker-page-badge"` 的 fixed div，z-index 2147483647 |
 | 面板拖拽 | `pointerdown/move/up/cancel` 事件 + `setPointerCapture` |
 | 点击/双击 | `setTimeout` 220ms 区分，dblclick 清除 pending click timer |
-| Attention | `setInterval` 350ms 切换标题 8 次 + `overlay.animate` 呼吸灯效果 |
+| Attention | `setInterval` 350ms 切换标题 8 次 + favicon 闪烁 + `overlay.animate` 呼吸灯效果，不激活目标 tab |
 
 **消息处理:**
 
@@ -155,7 +157,7 @@ FLASH_TAB_ATTENTION  → flashTabAttention() → 播放 attention 动画
 ```javascript
 state = {
   currentTab, currentMarker,
-  presets, recentMarkers, markedTabs,
+  presets, recentMarkers,
   settings, selectedColor, selectedEmoji, editingPresetId
 }
 ```
@@ -163,7 +165,7 @@ state = {
 **渲染流程:**
 
 ```
-loadPopupData() ──► GET_POPUP_DATA ──► 回填 state ──► 全量 render
+loadPopupData() ──► GET_STATE ──► 回填 state ──► 全量 render
 ```
 
 **渲染函数:**
@@ -176,7 +178,6 @@ loadPopupData() ──► GET_POPUP_DATA ──► 回填 state ──► 全量
 | `renderEmojiGrid()` | 12 Emoji 网格 + toggle 选中 |
 | `renderRecentList()` | 最近使用列表 |
 | `renderPresetList()` | 预设卡片列表 + 拖拽事件 |
-| `renderMarkedTabs()` | 已标记标签列表 + 跳转按钮 |
 | `updatePreview()` | 实时预览芯片 |
 
 **用户操作流程:**
@@ -195,7 +196,7 @@ pageState = { presets, settings }
 ```
 
 **与 Popup 的差异:**
-- 通过同样的 `GET_POPUP_DATA` 获取数据（命名历史债务）
+- 通过同样的 `GET_STATE` 获取数据
 - 只提供删除预设，不提供新增/编辑
 - 语言切换用 `<select>` 而非 toggle 按钮
 
@@ -245,8 +246,7 @@ popup.js: applyMarker()
 bg/main.js: onMessage APPLY_MARKER
   │ validateMarker()
   │ applyMarkerToTab(tabId, marker)
-  │   ├─ upsertTabMarker(tabId, markerState)
-  │   ├─ pushRecentMarker(marker)
+  │   ├─ upsertTabMarkerWithRecent(tabId, markerState, marker)
   │   ├─ applyVisualMarker(tabId, markerState, settings)
   │   │    ├─ ensureContentScriptInjected(tabId)
   │   │    └─ safeSendToTab(tabId, APPLY_CONTENT_MARKER)
@@ -259,7 +259,7 @@ content/marker.js: applyMarker()
   ├─ ensureFaviconElement().href = dataUrl
   ├─ renderBadge(marker, settings, overlayItems)
   ├─ startTitleSync()      // setInterval 500ms
-  └─ startFaviconSync()    // setInterval 800ms
+  └─ startFaviconSync()    // MutationObserver + setInterval 2000ms fallback
 ```
 
 ### 4.2 页面刷新后恢复
@@ -395,11 +395,9 @@ function isInjectableUrl(url) {
 
 ## 7. 已知技术债务
 
-1. **Storage RMW 竞态**: `getState → modify → saveState` 非原子，快速操作可能丢数据
-2. **Content Script 内联样式过多**: 难以维护，应逐步提取为 CSS 类
-3. **GET_POPUP_DATA 被 Options 复用**: 语义不清晰，应改名为 `GET_STATE`
-4. **updateSetting 职责混杂**: 同时处理 settings 和 presets 排序
-5. **无自动化测试**: 1.0.1 应补充 validator 和 i18n 的基础测试
+1. **Content Script 内联样式过多**: 难以维护，应逐步提取为 CSS 类
+2. **tabs.onUpdated 可能重复应用**: 可能造成不必要的重复渲染
+3. **无自动化测试**: 后续应补充 validator、i18n、storage migration 的基础测试
 
 ---
 

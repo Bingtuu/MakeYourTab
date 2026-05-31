@@ -4,6 +4,7 @@ import {
   MAX_PRESETS,
   STORAGE_KEY
 } from "../shared/constants.js";
+import { normalizeMarker } from "../shared/validators.js";
 
 let _storageQueue = Promise.resolve();
 
@@ -13,6 +14,19 @@ function enqueue(task) {
   return result;
 }
 
+function buildRecentMarker(marker) {
+  const markerKey = [marker.color || "", marker.emoji || "", marker.text || ""].join("|");
+
+  return {
+    id: `recent_${Date.now()}`,
+    markerKey,
+    color: marker.color || "",
+    emoji: marker.emoji || "",
+    text: marker.text || "",
+    updatedAt: Date.now()
+  };
+}
+
 function getDefaultState() {
   return {
     version: 1,
@@ -20,6 +34,22 @@ function getDefaultState() {
     savedPresets: [],
     recentMarkers: [],
     settings: { ...DEFAULT_SETTINGS }
+  };
+}
+
+function normalizePreset(preset = {}) {
+  const { marker: legacyMarker, ...rest } = preset;
+  const nestedMarker = legacyMarker && typeof legacyMarker === "object" ? legacyMarker : {};
+  const marker = normalizeMarker({
+    ...nestedMarker,
+    color: preset.color ?? nestedMarker.color,
+    emoji: preset.emoji ?? nestedMarker.emoji,
+    text: preset.text ?? nestedMarker.text
+  });
+
+  return {
+    ...rest,
+    ...marker
   };
 }
 
@@ -34,6 +64,9 @@ export async function getState() {
   return {
     ...getDefaultState(),
     ...storedState,
+    savedPresets: Array.isArray(storedState.savedPresets)
+      ? storedState.savedPresets.map(normalizePreset)
+      : [],
     settings: {
       ...DEFAULT_SETTINGS,
       ...(storedState.settings || {})
@@ -54,6 +87,25 @@ export async function upsertTabMarker(tabId, payload) {
     state.tabMarkers[String(tabId)] = payload;
     await saveState(state);
     return payload;
+  });
+}
+
+export async function upsertTabMarkerWithRecent(tabId, payload, marker) {
+  return enqueue(async () => {
+    const state = await getState();
+    const recentMarker = buildRecentMarker(marker);
+
+    state.tabMarkers[String(tabId)] = payload;
+    state.recentMarkers = [
+      recentMarker,
+      ...state.recentMarkers.filter((item) => item.markerKey !== recentMarker.markerKey)
+    ].slice(0, MAX_RECENT_MARKERS);
+
+    await saveState(state);
+    return {
+      markerState: payload,
+      recentMarkers: state.recentMarkers
+    };
   });
 }
 
@@ -131,18 +183,11 @@ export async function deletePreset(presetId) {
 export async function pushRecentMarker(marker) {
   return enqueue(async () => {
     const state = await getState();
-    const markerKey = [marker.color || "", marker.emoji || "", marker.text || ""].join("|");
+    const recentMarker = buildRecentMarker(marker);
 
     state.recentMarkers = [
-      {
-        id: `recent_${Date.now()}`,
-        markerKey,
-        color: marker.color || "",
-        emoji: marker.emoji || "",
-        text: marker.text || "",
-        updatedAt: Date.now()
-      },
-      ...state.recentMarkers.filter((item) => item.markerKey !== markerKey)
+      recentMarker,
+      ...state.recentMarkers.filter((item) => item.markerKey !== recentMarker.markerKey)
     ].slice(0, MAX_RECENT_MARKERS);
 
     await saveState(state);
@@ -150,15 +195,24 @@ export async function pushRecentMarker(marker) {
   });
 }
 
+export async function reorderPresets(orderedPresetIds = []) {
+  return enqueue(async () => {
+    const state = await getState();
+    const presetMap = new Map(state.savedPresets.map((preset) => [preset.id, preset]));
+    const orderedPresets = orderedPresetIds
+      .map((id) => presetMap.get(id))
+      .filter(Boolean);
+    const remainingPresets = state.savedPresets.filter((preset) => !orderedPresetIds.includes(preset.id));
+
+    state.savedPresets = [...orderedPresets, ...remainingPresets];
+    await saveState(state);
+    return state.savedPresets;
+  });
+}
+
 export async function updateSetting(key, value) {
   return enqueue(async () => {
     const state = await getState();
-
-    if (key === "presets") {
-      state.savedPresets = value;
-      await saveState(state);
-      return state.savedPresets;
-    }
 
     state.settings = {
       ...state.settings,
